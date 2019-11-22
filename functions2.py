@@ -46,20 +46,30 @@ def convertDICOM2NPY(savePth='', PRINT=False):
     skipcount = 0
     for d in dcms:
         if hasattr(d, 'SliceLocation'):
-            slices.append(d)
+            slices.append(d)            
         else:
             skipcount = skipcount + 1
+     
+        # empty matrix
+        if not slices:
+            print(d.PatientID, '--3D matrix(?)--' ,f)
+            break
+      
     if PRINT:
         print("skipped files without 'SliceLocation': {}".format(skipcount))
+        
+ 
     
     # ensure they are in the correct order - sort them
     slices = sorted(slices, key=lambda s: s.SliceLocation)
+    
     
     # create 3D array
     img_shape = list(slices[0].pixel_array.shape)
     img_shape.append(len(slices))
     pixelType = slices[0].pixel_array.dtype
     img3d = np.zeros(img_shape, dtype=pixelType)
+
     
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
