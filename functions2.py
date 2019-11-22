@@ -1,16 +1,21 @@
 """
 (C) MK & ASL & AL
 
-Functions to work with DICOMs.
+Auxiliary functions to
+    - convert DICOM to NPY,
+    - get statistics from 3D ndarray and save them as npy files (for each 2D slice separately and a whole 3D image),
+    - plots 4 subplots with statistic values in each slice: min, max, mean, std,
+    - 
 
 
 Started: 2019.11.21
-Modified: 2019.11.21
+Modified: 2019.11.22
 """
 
 import os
 import numpy as np
 import pydicom as dicom
+import matplotlib.pyplot as plt
 
 
 def convertDICOM2NPY(savePth='', PRINT=False):
@@ -81,7 +86,7 @@ def getStatistics(im3d, savePthSL='', savePthIm3d='', PRINT=False):
         statsSL - matrix with ~170 rows (for each 2D slice) and 4 columns (min/max/mean/std)
         statsIm3D - matrix of 4 elements (columns). These are global values the whole 3D array (min/max/mean/std)
         
-        Both arrays are written to separate folders: savePthSL and savePthIm3d
+        Both arrays are written to separate folders: STATSL and STATIM3D
     """
     # statistisc for each slide separately
     sz = im3d.shape[-1] # number of slices
@@ -102,3 +107,65 @@ def getStatistics(im3d, savePthSL='', savePthIm3d='', PRINT=False):
         np.save(savePthIm3d, statsIm3d)
         if PRINT:
             print('saved to: %s' % savePthIm3d)
+            
+            
+def plot4stats(stats, mainTitle, xLabel, fig, ax, line='--', hspace=0.3, wspace=0.3):
+    """
+    Plots 4 subplots with statistic values in each slice: min, max, mean, std.
+    
+    input: stats - an matrix with statiscic values for each slice (~170 rows x 4 columns)
+    
+    S: 2019.11.22
+    M: 2019.11.22
+    """
+    fig.suptitle(mainTitle)
+    fig.subplots_adjust(hspace=hspace,wspace=wspace)
+
+    
+    mn = stats[:,0]
+    mx = stats[:,1]
+    av = stats[:,2]
+    st = stats[:,3]
+    
+    ax[0,0].plot(mn, line)
+    ax[0,0].axes.grid(True)
+    ax[0,0].set_title('min')   
+    ax[0,0].set_xlabel(xLabel)
+    
+    ax[0,1].plot(mx, line)
+    ax[0,1].axes.grid(True)
+    ax[0,1].set_title('max')   
+    ax[0,1].set_xlabel(xLabel)
+   
+    ax[1,0].plot(av, line)
+    ax[1,0].axes.grid(True)
+    ax[1,0].set_title('aver.') 
+    ax[1,0].set_xlabel(xLabel)
+    
+    ax[1,1].plot(st, line)
+    ax[1,1].axes.grid(True)
+    ax[1,1].set_title('std')
+    ax[1,1].set_xlabel(xLabel)
+    
+    
+def statParamsScatter(statmat):
+    """
+    Plots 3D scatter plot of features max,mean,std of matrix.
+    
+    C: 2019.11.22
+    M: 2019.11.22
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    xs = statmat[:,1] # max
+    ys = statmat[:,2] # mean
+    zs = statmat[:,3] # std
+    
+    ax.scatter(xs, ys, zs)
+    ax.set_xlabel('max')
+    ax.set_ylabel('aver')
+    ax.set_zlabel('std')
+
+    plt.show()
